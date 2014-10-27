@@ -52,13 +52,6 @@ var Logger = {
 
         if ( force || level <= this._logLevel ) {
 
-            if ( this.logToServer === this.LOGTOSERVER || force === this.LOGTOSERVER ) {
-                this.sendLogToServer(level, message, uniqueID);
-            }
-            else if ( this.logToServer === this.LOGTOMEDIASERVER || force === this.LOGTOMEDIASERVER ) {
-                MediaBrowserService.log( level, message);
-            }
-            
             if ( this.logLocal ) {
                 log( '[' + this._logLevels[level] + '] ' + message);
             }
