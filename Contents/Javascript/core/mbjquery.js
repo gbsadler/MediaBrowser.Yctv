@@ -303,8 +303,6 @@ jQuery.ajax = function(options){
 	// Translate to our http requests
     var xhr = new XMLHttpRequest();
     xhr.open(options.type, options.url, true);
-
-    var params = "username=" + encodeURIComponent(o.username) + "&password=" + encodeURIComponent(o.password);
     xhr.setRequestHeader("Content-type", options.contentType);
     for (var i = options.headers.length - 1; i >= 0; i--) {
     	xhr.setRequestHeader(options.headers[i]);
