@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+    <name>MediaBrowserTv</name>
+    <version>0.0.1</version>
+    <identifier>Tv.MediaBrowser.yctv.MediaBrowserTv</identifier>
+    <author name="MediaBrowser" organization="Media Browser" href="http://MediaBrowser.tv" />
+    <copyright>2014 MediaBrowserTv.com</copyright>
+    <description>MediaBrowserTv is a Yahoo Connected TV client for Media Browser Server. For more details see http://MediaBrowser.tv</description>
+    <platform minVersion="5.5" />
+    <security>
+	<filesystem>full</filesystem>
+	<command>true</command>
+        <http>all</http>
+    </security>
+    <settings>
+        <setting name="debug" value="on"/>
+    </settings>
+    <image usage="960x540.logo"                     src="Assets/960x540/title-logo-540.png" />
+    <image usage="960x540.loading.snippet"          src="Assets/960x540/title-loading-logo-540.png"/>
+    <image usage="960x540.icon"                     src="Assets/960x540/appIcon.png" />
+</metadata>
