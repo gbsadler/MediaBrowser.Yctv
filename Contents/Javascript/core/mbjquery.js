@@ -316,7 +316,7 @@ jQuery.ajax = function(options){
                     		deferred.resolve(xhr.responseText);
                     	}
                     } else {
-                    	Logger.error("Error in ajax call: " xhr.status);
+                    	Logger.error("Error in ajax call: " + xhr.status);
                     	deferred.reject();
                     }
             }
