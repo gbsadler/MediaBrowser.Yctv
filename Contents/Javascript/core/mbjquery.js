@@ -310,11 +310,14 @@ jQuery.ajax = function(options){
     xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                            var json = JSON.parse(xhr.responseText);
-                            //deferred.resolve...???
-
+                    	if (options.dataType == "json") {
+                    		deferred.resolve(JSON.parse(xhr.responseText));
+                    	} else {
+                    		deferred.resolve(xhr.responseText);
+                    	}
                     } else {
-                    	//deferred.reject...????
+                    	Logger.error("Error in ajax call: " xhr.status);
+                    	deferred.reject();
                     }
             }
     };
