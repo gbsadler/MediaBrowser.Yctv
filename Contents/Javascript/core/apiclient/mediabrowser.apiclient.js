@@ -3317,4 +3317,4 @@
 
     };
 
-})(MediaBrowserTv, jQuery, JSON, null, KONtx.utility.setTimeout, null, null);
+})(MediaBrowserTv, jQuery, JSON, null, KONtx.utility.timer.setTimeout, null, null);
