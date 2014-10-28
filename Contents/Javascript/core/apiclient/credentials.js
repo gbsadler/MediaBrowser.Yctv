@@ -1,4 +1,4 @@
-﻿(function (globalScope, store) {
+﻿(function (globalScope, store, JSON) {
 
     if (!globalScope.MediaBrowser) {
         globalScope.MediaBrowser = {};
@@ -76,4 +76,4 @@
         };
     };
 
-})(MediaBrowserTv, Store);
+})(MediaBrowserTv, Store, JSON);

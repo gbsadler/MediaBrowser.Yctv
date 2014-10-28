@@ -9,9 +9,6 @@ var MediaBrowserService = {
             return;
         }
 
-        //Check Connectivity
-        this._pingServer();
-
 	KONtx.speedtest.profileConnection(this._saveBandwidth.bindTo(this), null, this._speedTestError.bindTo(this));
 
     },

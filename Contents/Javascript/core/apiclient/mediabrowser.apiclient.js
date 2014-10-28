@@ -122,7 +122,123 @@
                 }
             }
 
-            return $.ajax(request);
+            if (!self.enableAutomaticNetwork) {
+                return $.ajax(request);
+            }
+
+            var deferred = $.Deferred();
+            self.ajaxWithFailover(request, deferred);
+            return deferred.promise();
+        };
+
+        function tryReconnectInternal(deferred, connectionMode, currentRetryCount) {
+
+            if (connectionMode == null) {
+                connectionMode = self.connectionMode;
+            }
+
+            var url = connectionMode == MediaBrowser.ConnectionMode.Local ?
+                self.serverInfo().LocalAddress :
+                self.serverInfo().RemoteAddress;
+
+            $.ajax({
+
+                type: "GET",
+                url: url + "/mediabrowser/system/info/public",
+                dataType: "json",
+
+                error: function () {
+                },
+
+                timeout: 3000
+
+            }).done(function () {
+
+                self.connectionMode = connectionMode;
+
+                deferred.resolve();
+
+            }).fail(function () {
+
+                currentRetryCount = currentRetryCount || 0;
+
+                if (currentRetryCount <= 6) {
+
+                    var newConnectionMode;
+
+                    if (connectionMode == MediaBrowser.ConnectionMode.Local && serverInfo.RemoteAddress) {
+                        newConnectionMode = MediaBrowser.ConnectionMode.Remote;
+                    }
+                    else if (connectionMode == MediaBrowser.ConnectionMode.Remote && serverInfo.LocalAddress) {
+                        newConnectionMode = MediaBrowser.ConnectionMode.Local;
+                    }
+                    else {
+                        newConnectionMode = connectionMode;
+                    }
+
+                    tryReconnectInternal(deferred, newConnectionMode, currentRetryCount + 1);
+
+                } else {
+                    deferred.reject();
+                }
+            });
+        }
+
+        function tryReconnect() {
+
+            var deferred = $.Deferred();
+            tryReconnectInternal(deferred);
+            return deferred.promise();
+        }
+
+        function replaceServerAddress(url, newBaseUrl) {
+
+            var index = url.toLowerCase().indexOf("/mediabrowser");
+
+            if (index != -1) {
+                return newBaseUrl + url.substring(index);
+            }
+
+            return url;
+        }
+
+        self.ajaxWithFailover = function (request, deferred, enableReconnection, replaceUrl) {
+
+            // Stop global error handlers
+            request.error = function () { };
+
+            if (replaceUrl) {
+
+                var baseUrl = connectionMode == MediaBrowser.ConnectionMode.Local ?
+                    self.serverInfo().LocalAddress :
+                    self.serverInfo().RemoteAddress;
+
+                request.url = replaceServerAddress(request.url, baseUrl);
+            }
+
+            $.ajax(request).done(function (response) {
+
+                deferred.resolveWith(null, [response]);
+
+            }).fail(function () {
+
+                if (enableReconnection !== false) {
+                    tryReconnect().done(function () {
+
+                        self.ajaxWithFailover(request, deferred, false, true);
+
+                    }).fail(function () {
+
+                        // TODO: Make sure global ajax error handlers fire
+                        deferred.reject();
+
+                    });
+                } else {
+
+                    // TODO: Make sure global ajax error handlers fire
+                    deferred.reject();
+                }
+            });
         };
 
         self.getJSON = function (url) {
@@ -158,6 +274,13 @@
 
         self.enableAutomaticNetworking = function (server, connectionMode) {
 
+            self.serverInfo(server);
+            self.connectionMode = connectionMode;
+            self.enableAutomaticNetwork = true;
+        };
+
+        self.isWebSocketSupported = function () {
+            return WebSocket != null;
         };
 
         self.openWebSocket = function () {
@@ -3194,4 +3317,4 @@
 
     };
 
-})(MediaBrowserTv, jQuery, JSON, null, null, null, null);
+})(MediaBrowserTv, jQuery, JSON, null, KONtx.utility.setTimeout, null, null);

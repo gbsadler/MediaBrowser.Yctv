@@ -178,7 +178,7 @@
 
         function ensureWebSocket(apiClient) {
 
-            if (!apiClient.isWebSocketOpenOrConnecting) {
+            if (!apiClient.isWebSocketOpenOrConnecting && apiClient.isWebSocketSupported()) {
                 apiClient.openWebSocket();
             }
         }
