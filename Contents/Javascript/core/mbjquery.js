@@ -1,4 +1,31 @@
-(function (globalScope) {
+// Define a local copy of jQuery
+var jQuery = function (selector, context) {
+    // The jQuery object is actually just the init constructor 'enhanced'
+    // Need init if jQuery is called (just allow error to be thrown if not included)
+    return new jQuery.fn.init(selector, context);
+};
+
+(function () {
+
+    function isArraylike(obj) {
+        var length = obj.length,
+            type = jQuery.type(obj);
+
+        if (type === "function" || jQuery.isWindow(obj)) {
+            return false;
+        }
+
+        if (obj.nodeType === 1 && length) {
+            return true;
+        }
+
+        return type === "array" || length === 0 ||
+            typeof length === "number" && length > 0 && (length - 1) in obj;
+    }
+
+    var strundefined = typeof undefined;
+
+    var rnotwhite = (/\S+/g);
 
     var arr = [];
 
@@ -20,12 +47,11 @@
 
     var version = "2.11";
 
-    // Define a local copy of jQuery
-    var jQuery = globalScope.jQuery = function (selector, context) {
-        // The jQuery object is actually just the init constructor 'enhanced'
-        // Need init if jQuery is called (just allow error to be thrown if not included)
-        return new jQuery.fn.init(selector, context);
-    }
+    var
+        rkeyEvent = /^key/,
+        rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/,
+        rfocusMorph = /^(?:focusinfocus|focusoutblur)$/,
+        rtypenamespace = /^([^.]*)(?:\.(.+)|)$/;
 
     jQuery.fn = jQuery.prototype = {
         // The current version of jQuery being used
@@ -466,9 +492,11 @@
         var xhr = new XMLHttpRequest();
         xhr.open(options.type, options.url, true);
         xhr.setRequestHeader("Content-type", options.contentType);
-        for (var i = options.headers.length - 1; i >= 0; i--) {
-            xhr.setRequestHeader(options.headers[i]);
-        };
+        if (options.headers) {
+            for (var i = options.headers.length - 1; i >= 0; i--) {
+                xhr.setRequestHeader(options.headers[i]);
+            };
+        }
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
@@ -487,6 +515,123 @@
 
         return deferred.promise();
     };
+
+    // Initialize a jQuery object
+
+
+    var init = jQuery.fn.init = function (selector, context) {
+            var match, elem;
+
+            // HANDLE: $(""), $(null), $(undefined), $(false)
+            if (!selector) {
+                return this;
+            }
+
+            // Handle HTML strings
+            if (typeof selector === "string") {
+                if (selector[0] === "<" && selector[selector.length - 1] === ">" && selector.length >= 3) {
+                    // Assume that strings that start and end with <> are HTML and skip the regex check
+                    match = [null, selector, null];
+
+                } else {
+                    match = rquickExpr.exec(selector);
+                }
+
+                // Match html or make sure no context is specified for #id
+                if (match && (match[1] || !context)) {
+
+                    // HANDLE: $(html) -> $(array)
+                    if (match[1]) {
+                        context = context instanceof jQuery ? context[0] : context;
+
+                        // scripts is true for back-compat
+                        // Intentionally let the error be thrown if parseHTML is not present
+                        jQuery.merge(this, jQuery.parseHTML(
+                            match[1],
+                            context && context.nodeType ? context.ownerDocument || context : document,
+                            true
+                        ));
+
+                        // HANDLE: $(html, props)
+                        if (rsingleTag.test(match[1]) && jQuery.isPlainObject(context)) {
+                            for (match in context) {
+                                // Properties of context are called as methods if possible
+                                if (jQuery.isFunction(this[match])) {
+                                    this[match](context[match]);
+
+                                    // ...and otherwise set as attributes
+                                } else {
+                                    this.attr(match, context[match]);
+                                }
+                            }
+                        }
+
+                        return this;
+
+                        // HANDLE: $(#id)
+                    } else {
+                        elem = document.getElementById(match[2]);
+
+                        // Check parentNode to catch when Blackberry 4.6 returns
+                        // nodes that are no longer in the document #6963
+                        if (elem && elem.parentNode) {
+                            // Inject the element directly into the jQuery object
+                            this.length = 1;
+                            this[0] = elem;
+                        }
+
+                        this.context = document;
+                        this.selector = selector;
+                        return this;
+                    }
+
+                    // HANDLE: $(expr, $(...))
+                } else if (!context || context.jquery) {
+                    return (context || rootjQuery).find(selector);
+
+                    // HANDLE: $(expr, context)
+                    // (which is just equivalent to: $(context).find(expr)
+                } else {
+                    return this.constructor(context).find(selector);
+                }
+
+                // HANDLE: $(DOMElement)
+            } else if (selector.nodeType) {
+                this.context = this[0] = selector;
+                this.length = 1;
+                return this;
+
+                // HANDLE: $(function)
+                // Shortcut for document ready
+            } else if (jQuery.isFunction(selector)) {
+                return typeof rootjQuery.ready !== "undefined" ?
+                    rootjQuery.ready(selector) :
+                    // Execute immediately if ready is not present
+                    selector(jQuery);
+            }
+
+            if (selector.selector !== undefined) {
+                this.selector = selector.selector;
+                this.context = selector.context;
+            }
+
+            return jQuery.makeArray(selector, this);
+        };
+
+    // Give the init function the jQuery prototype for later instantiation
+    init.prototype = jQuery.fn;
+
+	// String to Object options format cache
+	var optionsCache = {};
+
+	// Convert String-formatted options into Object-formatted ones and store in cache
+	function createOptions( options ) {
+		var object = optionsCache[ options ] = {};
+		jQuery.each( options.match( rnotwhite ) || [], function( _, flag ) {
+			object[ flag ] = true;
+		});
+		return object;
+	}
 
     /*
      * Create a callback list using the following parameters:
@@ -791,6 +936,44 @@
         return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
     };
 
+	// ES 15.2.3.6 Object.defineProperty ( O, P, Attributes )
+	// Partial support for most common case - getters, setters, and values
+	(function() {
+	  if (!Object.defineProperty ||
+		  !(function () { try { Object.defineProperty({}, 'x', {}); return true; } catch (e) { return false; } } ())) {
+		var orig = Object.defineProperty;
+		Object.defineProperty = function (o, prop, desc) {
+		  // In IE8 try built-in implementation for defining properties on DOM prototypes.
+		  if (orig) { try { return orig(o, prop, desc); } catch (e) {} }
+
+		  if (o !== Object(o)) { throw TypeError("Object.defineProperty called on non-object"); }
+		  if (Object.prototype.__defineGetter__ && ('get' in desc)) {
+			Object.prototype.__defineGetter__.call(o, prop, desc.get);
+		  }
+		  if (Object.prototype.__defineSetter__ && ('set' in desc)) {
+			Object.prototype.__defineSetter__.call(o, prop, desc.set);
+		  }
+		  if ('value' in desc) {
+			o[prop] = desc.value;
+		  }
+		  return o;
+		};
+	  }
+	}());
+
+	// ES 15.2.3.7 Object.defineProperties ( O, Properties )
+	if (typeof Object.defineProperties !== "function") {
+	  Object.defineProperties = function (o, properties) {
+		if (o !== Object(o)) { throw TypeError("Object.defineProperties called on non-object"); }
+		var name;
+		for (name in properties) {
+		  if (Object.prototype.hasOwnProperty.call(properties, name)) {
+			Object.defineProperty(o, name, properties[name]);
+		  }
+		}
+		return o;
+	  };
+	}
 
     function Data() {
         // Support: Android < 4,
@@ -965,8 +1148,6 @@
         }
     };
     var data_priv = new Data();
-
-    var data_user = new Data();
 
     function returnTrue() {
         return true;
@@ -1591,4 +1772,4 @@
     };
 
 
-})(window);
+})();
