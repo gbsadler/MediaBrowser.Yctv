@@ -11,6 +11,11 @@ var MediaBrowserService = {
 
 	KONtx.speedtest.profileConnection(this._saveBandwidth.bindTo(this), null, this._speedTestError.bindTo(this));
 
+    //Test connection to MB
+    apiClient = new MediaBrowserTv.MediaBrowser.ApiClient("http://eric-office:8096", "MediaBrowserTv", Config.currentVersion, tv.system.OEM, tv.system.deviceId, Config.Capabilities);
+
+    apiClient.getPublicSystemInfo().done(function(info){state = Config.STATE_READY;}).fail(function(){state = Config.STATE_ERROR;});
+
     },
     
     state: Config.STATE_INIT,
@@ -19,6 +24,7 @@ var MediaBrowserService = {
     serverInfo: {},
     _currentMedia: {},
     sessionID: null,
+    apiClient: null,
 
     _saveBandwidth: function(speed) {
         Logger.debug('Detected Connection Speed: ' + speed);

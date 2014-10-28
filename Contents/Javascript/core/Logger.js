@@ -86,3 +86,9 @@ var Logger = {
 };
 
 Logger.init();
+
+var console = {
+    log: function(message) {
+        Logger.info(message);
+    }
+};
