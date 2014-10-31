@@ -14,7 +14,7 @@ var MediaBrowserService = {
     //Test connection to MB
     apiClient = new MediaBrowserTv.MediaBrowser.ApiClient("http://eric-office:8096", "MediaBrowserTv", Config.currentVersion, tv.system.OEM, tv.system.deviceId, Config.Capabilities);
 
-    apiClient.getPublicSystemInfo().done(function(info){state = Config.STATE_READY;}).fail(function(){state = Config.STATE_ERROR;});
+    apiClient.getPublicSystemInfo().done(function(){Logger.debug("====== in done"); state = Config.STATE_READY; Logger.debug("*********Service state is: "+state);}).fail(function(){state = Config.STATE_ERROR; Logger.error("Error connecting to MB")});
 
     },
     

@@ -486,20 +486,24 @@ var jQuery = function (selector, context) {
 
     jQuery.ajax = function (options) {
 
+        Logger.debug("About to send ajax query: " + options.type + " " + options.url);
         var deferred = jQuery.Deferred();
 
         // Translate to our http requests
         var xhr = new XMLHttpRequest();
         xhr.open(options.type, options.url, true);
         xhr.setRequestHeader("Content-type", options.contentType);
+        xhr.setRequestHeader( 'Accept', 'application/json' );        
         if (options.headers) {
             for (var i = options.headers.length - 1; i >= 0; i--) {
                 xhr.setRequestHeader(options.headers[i]);
             };
         }
-        xhr.onreadystatechange = function () {
+        handleResponse = function () {
+            Logger.debug( 'Recieved XHR State Change: State: ' + xhr.readyState + ' Status: ' + xhr.status);
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
+                    Logger.debug("Got response: " + xhr.responseText);
                     if (options.dataType == "json") {
                         deferred.resolve(JSON.parse(xhr.responseText));
                     } else {
@@ -511,7 +515,12 @@ var jQuery = function (selector, context) {
                 }
             }
         };
+
+        xhr.onreadystatechange = handleResponse.bindTo(this);
+
+        Logger.debug("Sending...");
         xhr.send(options.data);
+        Logger.debug("Sent.");
 
         return deferred.promise();
     };
